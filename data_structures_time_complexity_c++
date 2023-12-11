@@ -1,0 +1,49 @@
+Arrays:
+	Access: O(1)
+	Search: O(n)
+	Insertion (at the end): O(1)
+	Deletion (at the end): O(1)
+	Insertion (at the beginning or middle): O(n)
+	Deletion (at the beginning or middle): O(n)
+
+Linked Lists:
+	Access: O(n)
+	Search: O(n)
+	Insertion (at the beginning): O(1)
+	Deletion (at the beginning): O(1)
+	Insertion (at the end): O(n)
+	Deletion (at the end): O(n)
+	Insertion (at a specific position): O(n)
+	Deletion (at a specific position): O(n)
+
+Stacks and Queues:
+	Push/Enqueue: O(1)
+	Pop/Dequeue: O(1)
+	Access (for stacks): O(n)
+	Access (for queues): O(n)
+
+Hash Tables (unordered_map in C++):
+	Insertion: O(1) average case, O(n) worst case
+	Deletion: O(1) average case, O(n) worst case
+	Search: O(1) average case, O(n) worst case
+
+Binary Trees:
+	Search: O(log n) average case, O(n) worst case (for unbalanced trees)
+	Insertion: O(log n) average case, O(n) worst case (for unbalanced trees)
+	Deletion: O(log n) average case, O(n) worst case (for unbalanced trees)
+
+AVL Trees (Balanced Binary Search Trees):
+	Search: O(log n)
+	Insertion: O(log n)
+	Deletion: O(log n)
+
+Heaps:
+	Insertion: O(log n)
+	Extract Minimum/Maximum: O(log n)
+	Build Heap: O(n)
+	Heapify: O(n)
+
+Graphs (Adjacency List Representation):
+	Search: O(V + E) where V is the number of vertices and E is the number of edges.
+	Insertion/Deletion of a vertex or edge: O(V + E)
+
