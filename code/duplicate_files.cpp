@@ -26,7 +26,9 @@ What if the process takes a long time?
 In general, BFS will use more memory then DFS. However BFS can take advantage of the locality of files in inside directories, and therefore will probably be faster
 
 2. If the file content is very large (GB level), how will you modify your solution?
-In a real life solution we will not hash the entire file content, since it's not practical. Instead we will first map all the files according to size. Files with different sizes are guaranteed to be different. We will than hash a small part of the files with equal sizes (using MD5 for example). Only if the md5 is the same, we will compare the files byte by byte
+In a real life solution we will not hash the entire file content, since it's not practical. Instead we will first map all the files according to size. 
+Files with different sizes are guaranteed to be different. We will than hash a small part of the files with equal sizes (using MD5 for example). 
+Only if the md5 is the same, we will compare the files byte by byte
 
 3. If you can only read the file by 1kb each time, how will you modify your solution?
 This won't change the solution. We can create the hash from the 1kb chunks, and then read the entire file if a full byte by byte comparison is required.
@@ -40,7 +42,8 @@ We will use several filters to compare: File size, Hash and byte by byte compari
 Also, to answer this What is the most time consuming part and memory consuming part of it? How to optimize? part:
 Comparing the file (by size, by hash and eventually byte by byte) is the most time consuming part.
 Generating hash for every file will be the most memory consuming part.
-We follow the above procedure will optimize it, since we compare files by size first, only when sizes differ, we'll generate and compare hashes, and only when hashes are the same, we'll compare byte by byte.
+We follow the above procedure will optimize it, since we compare files by size first, only when sizes differ, 
+we'll generate and compare hashes, and only when hashes are the same, we'll compare byte by byte.
 Also, using better hashing algorithm will also reduce memory/time.
 */
 
@@ -69,7 +72,7 @@ std::vector<std::vector<std::string>> findDuplicate(const std::vector<std::strin
             files[fileContent].push_back(fileName);
         }
     }
-    // tego jeszczen nie kminie
+
     for (const auto& file : files) {
         if (file.second.size() > 1) { // check if there are more thatn one files in a vector to determine dupe
             result.push_back(file.second);
@@ -127,7 +130,7 @@ std::vector<std::vector<std::string>> findDuplicatev2(const std::vector<std::str
 }
 
 int main() {
-    std::vector<std::vector<std::string>> ans = findDuplicatev2({"root/a 1.txt(abcde) 2.txt(efgh)","root/c 3.txt(abcdef)","root/c/d 4.txt(efgh)","root 4.txt(efgh)"});
+    std::vector<std::vector<std::string>> ans = findDuplicatev2({"root/a 1.txt(abcde) 2.txt(efgh)","root/c 3.txt(abcdef)","root/c/d 4.txt(efxh)","root 4.txt(efgh)"});
     for (const auto& vec : ans) {
         for (const auto& e : vec) {
             std::cout<< e << " ";
@@ -135,8 +138,7 @@ int main() {
         std::cout<<std::endl;
     }
     assert(ans[0][0] == "root/a/2.txt");
-    assert(ans[0][1] == "root/c/d/4.txt");
-    assert(ans[0][2] == "root/4.txt");
+    assert(ans[0][1] == "root/4.txt");
     return 0;
 }
 

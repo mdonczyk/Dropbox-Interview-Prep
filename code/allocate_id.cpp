@@ -17,6 +17,10 @@ Write a class for an id allocator that can allocate and release ids
 #include <stdexcept>
 #include <chrono>
 #include <mutex>
+#include <chrono>
+#include <thread>
+#include <bitset>
+#include <cmath>
 
 #define CURRENT_TIME std::chrono::high_resolution_clock::now()
 #define GET_DURATION(a) std::chrono::duration_cast<std::chrono::duration<float>>(a)
@@ -109,9 +113,36 @@ class BinaryHeapAllocator{
         int max_value;
         std::vector<bool> id_heap_vector;
         std::mutex mutex_;
+        int max_layer;
+        int first_index_of_max_layer;
     public:
-        explicit BinaryHeapAllocator(int max_value) : max_value(max_value){
+        explicit BinaryHeapAllocator(int max_val): max_value(max_val){ 
             id_heap_vector.resize(max_value * 2 -1); // talk about why that is
+            max_layer = get_tree_layers_count(max_value * 2 -1);
+            first_index_of_max_layer = std::pow(2, max_layer-1) -1;
+        }
+
+        int get_tree_layers_count(int heap_size) {
+            int layer_count=0;
+            while(heap_size>0) {
+                heap_size/=2;
+                layer_count++;
+            }
+            return layer_count;
+        }
+        
+        int get_id_from_index(int index) {
+            if (index >= first_index_of_max_layer) { // check if the index is at the most bottom level of tree
+                return index - first_index_of_max_layer;
+            }
+            return index - (first_index_of_max_layer - max_value);
+        }
+
+        int get_index_from_id(int id) {
+            if (id + first_index_of_max_layer < max_value * 2 -1) { // check if the index is at the most bottom level of tree
+                return id + first_index_of_max_layer;
+            }
+            return id + (first_index_of_max_layer - max_value);
         }
 
         int allocateId() {
@@ -121,9 +152,11 @@ class BinaryHeapAllocator{
             if (id_heap_vector[index] == true) { // top of the heap is True so that means that all the elements are also true
                 throw std::overflow_error("No Ids available");
             }
+
             while (index < max_value-1) { // so now we want to walk all the way down the binary tree
                 int left_child_index = 2*index + 1;
                 int right_child_index = 2*index + 2;
+
                 if (id_heap_vector[left_child_index] == false) {// unallocated Id in the left subtree
                     index = left_child_index;
                 } else if (id_heap_vector[right_child_index] == false) { // unallocated Id in the right subtree
@@ -134,12 +167,14 @@ class BinaryHeapAllocator{
             }
             id_heap_vector[index] = true;
             update_tree(index);
-            return (index - max_value + 1);
+            return (get_id_from_index(index));
         }
 
-        void update_tree(int index) {
-            while (index > 0) {
-                int parent_index = (index - 1) / 2;
+        void update_tree(int index) { 
+            // update the subtrees starting from the leaf node
+            int parent_index = index;
+            while (parent_index > 0) {
+                parent_index = (parent_index - 1) / 2;
                 int left_child_index = 2 * parent_index + 1;
                 int right_child_index = 2 * parent_index + 2;
                 if (id_heap_vector[left_child_index] == true && id_heap_vector[right_child_index] == true) {
@@ -147,19 +182,18 @@ class BinaryHeapAllocator{
                 } else {
                     id_heap_vector[parent_index] = false;
                 }
-                index = parent_index;
             }
         }
 
         void releaseId(int Id) {
             // release allocated id and allow it to be allocated again another time
             std::lock_guard<std::mutex> lock(mutex_);
-            if (Id < 0 || Id > max_value || id_heap_vector[Id + max_value -1] == false) {
+            if (Id < 0 || Id > max_value || id_heap_vector[get_index_from_id(Id)] == false) {
                 // throw an exception
                 throw std::invalid_argument("The Id " + std::to_string(Id) + " cannot be released");
             }
-            id_heap_vector[Id + max_value -1] = false;
-            update_tree(Id + max_value -1);
+            id_heap_vector[get_index_from_id(Id)] = false;
+            update_tree(get_index_from_id(Id));
         }
 };
 
@@ -172,7 +206,7 @@ int main () {
     }
     auto stop = CURRENT_TIME;
 	auto duration = GET_DURATION(stop - start);
-    std::cout << std::to_string(duration.count()) << std::endl;
+    std::cout << std::endl << std::to_string(duration.count()) << std::endl;
 
     start = CURRENT_TIME;
     MemoryOrSpaceEfficentAllocator second_allocator(1000);
@@ -181,19 +215,23 @@ int main () {
     }
     stop = CURRENT_TIME;
 	duration = GET_DURATION(stop - start);
-    std::cout << std::to_string(duration.count()) << std::endl;
+    std::cout << std::endl << std::to_string(duration.count()) << std::endl;
 
     start = CURRENT_TIME;
-    BinaryHeapAllocator third_allocator(10);
-    for (int i = 0; i < 10; i++) {
-        std::cout<<third_allocator.allocateId() << " ";
+    BinaryHeapAllocator third_allocator(1000);
+    for (int i = 0; i < 999; i++) {
+        // third_allocator.allocateId();
+        std::cout<<third_allocator.allocateId()<< " ";
     }
-
     std::cout<<std::endl;
+    third_allocator.releaseId(73);
+    std::cout<<third_allocator.allocateId()<< " ";
+    std::cout<<third_allocator.allocateId()<< " ";
+    third_allocator.releaseId(34);
+    std::cout<<third_allocator.allocateId()<< " ";
     stop = CURRENT_TIME;
 	duration = GET_DURATION(stop - start);
-    std::cout << std::to_string(duration.count()) << std::endl;
-    
+    std::cout << std::endl << std::to_string(duration.count()) << std::endl;
     return 0;
 }
 
