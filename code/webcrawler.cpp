@@ -1,12 +1,12 @@
-"""
+/*
 Given a URL, crawl that webpage for URLs, and then continue crawling until you've visited all URLs
 Assume you have an API with two methods:
 get_html_content(url) -> returns html of the webpage of url
 get_links_on_page(html) -> returns array of the urls in the html
 
 Do this in a breadth-first style manner (it's just easier).
-"""
-
+*/
+#if 0
 class Webcrawler:
 
     def __init__(self, url):
@@ -30,14 +30,14 @@ class Webcrawler:
             current_url = self.url_queue.pop()
             self.process_url(current_url)
         return list(self.visited)
-
-"""
+#endif
+/*
 Now you are asked what the bottleneck is. See the above comment.
 How do you fix the bottleneck?
 Use multithreading!
 Some interviewers let you use the ThreadPoolExecutor (lets you queue the work and self-manages the threads)
-"""
-
+*/
+#if 0
 from concurrent.futures import ThreadPoolExecutor
 
 class MultiThreadedWebcrawler:
@@ -89,3 +89,4 @@ class MultiThreadedWebcrawler:
                 time.sleep(1) #Let someone else take the lock. 
                 
         return list(self.visited_urls)
+#endif 0

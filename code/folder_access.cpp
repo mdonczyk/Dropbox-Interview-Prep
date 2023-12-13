@@ -1,4 +1,4 @@
-"""
+/*
 Dropbox
 
 Usually a phone screen question.
@@ -34,8 +34,9 @@ Tradeoff: The following is a top-down approach which looks down the tree and giv
 to all children folders.
 You might not have transitive relationships. You also might want to consider a bottom-up approach
 where search is O(h) (height of the folder tree), but space is O(A) (# folders you initially have access to)
-"""
+*/
 
+#if 0
 class FolderAccess:
 
     def __init__(self, folder_to_parent, access):
@@ -63,10 +64,10 @@ class FolderAccess:
 
     def has_access(self, folder_name):
         return folder_name in self.access
+#endif
 
-
-"""
+/*
 folder_access_obj = FolderAccess(folder_to_parent, access_list)
 print(folder.has_access("A"))
 ...
-"""
+*/

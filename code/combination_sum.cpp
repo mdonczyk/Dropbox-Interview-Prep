@@ -12,6 +12,7 @@ result in a given amount of soda.
 */
 #include <iostream>
 #include <vector>
+#include <deque>
 
 void print_vec(const std::vector<int>& vec) {
     for (const auto& e : vec) {

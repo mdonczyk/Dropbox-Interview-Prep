@@ -30,7 +30,7 @@ class Allocator{
         std::queue<int> released_ids;
         std::unordered_set<int> allocated_ids;
     public:
-        Allocator(int max_value) : max_value(max_value){
+        explicit Allocator(int max_value) : max_value(max_value){
             ids_iterator = 0;
         }
 
@@ -57,9 +57,9 @@ class Allocator{
 
         void releaseId(int Id) {
             // release allocated id and allow it to be allocated again another time
-            if (Id < 0 || Id > max_value || !(allocated_ids.contains(Id))) {
+            if (Id < 0 || Id > max_value || (allocated_ids.find(Id) != allocated_ids.end())) {
                 // throw an exception
-                throw std::invalid_argument("The " + std::to_string(Id) + " cannot be released");
+                throw std::invalid_argument("The Id " + std::to_string(Id) + " cannot be released");
             }
             allocated_ids.erase(allocated_ids.find(Id));
             released_ids.push(Id);
@@ -67,20 +67,18 @@ class Allocator{
 };
 
 class MemoryOrSpaceEfficentAllocator{
-     private:
+    private:
         int max_value;
-        // std::queue<int> released_ids;
-        // std::unordered_set<int> allocated_ids;
         std::vector<bool> id_vector;
         std::mutex mutex_;
     public:
-        MemoryOrSpaceEfficentAllocator(int max_value) : max_value(max_value){
+        explicit MemoryOrSpaceEfficentAllocator(int max_value) : max_value(max_value){
             id_vector.resize(max_value);
         }
 
         int allocateId() {
             // search for free ids that are false, if there are none throw error
-            std::lock_guard lock(mutex_);
+            std::lock_guard<std::mutex> lock(mutex_);
             int id_to_be_given = -1;
             for (int id = 0; id < max_value; id++) {
                 if (id_vector[id] == false) {
@@ -97,52 +95,104 @@ class MemoryOrSpaceEfficentAllocator{
 
         void releaseId(int Id) {
             // release allocated id and allow it to be allocated again another time
-            std::lock_guard lock(mutex_);
+            std::lock_guard<std::mutex> lock(mutex_);
             if (Id < 0 || Id > max_value || id_vector[Id]==false) {
                 // throw an exception
-                throw std::invalid_argument("The" + std::to_string(Id) + " cannot be released");
+                throw std::invalid_argument("The Id " + std::to_string(Id) + " cannot be released");
             }
             id_vector[Id] = false;
         }
 };
 
-void print_sizes() {
+class BinaryHeapAllocator{
+    private:
+        int max_value;
+        std::vector<bool> id_heap_vector;
+        std::mutex mutex_;
+    public:
+        explicit BinaryHeapAllocator(int max_value) : max_value(max_value){
+            id_heap_vector.resize(max_value * 2 -1); // talk about why that is
+        }
 
-    std::cout<< std::endl;
-    // std::cout<< "sizeof(std::queue<int>) = " << sizeof(std::queue<int>) <<std::endl;
-    // std::cout<< "sizeof(std::unordered_set<int>) = " << sizeof(std::unordered_set<int>) <<std::endl;
-    // std::cout<< "sizeof(std::map<int, bool>) = " << sizeof(std::map<int, bool>) <<std::endl;
-    // std::cout<< "sizeof(std::unordered_map<int, bool>) = " << sizeof(std::unordered_map<int, bool>) <<std::endl;
-    std::cout<< "sizeof(Allocator) = " << sizeof(Allocator) <<std::endl;
-    std::cout<< "sizeof(MemoryOrSpaceEfficentAllocator) = " << sizeof(MemoryOrSpaceEfficentAllocator) <<std::endl;
-    // std::cout<< "sizeof(vector<bool>) = " << sizeof(std::vector<bool>) <<std::endl;
-}
+        int allocateId() {
+            // search for free ids that are false, if there are none throw error
+            std::lock_guard<std::mutex> lock(mutex_);
+            int index = 0;
+            if (id_heap_vector[index] == true) { // top of the heap is True so that means that all the elements are also true
+                throw std::overflow_error("No Ids available");
+            }
+            while (index < max_value-1) { // so now we want to walk all the way down the binary tree
+                int left_child_index = 2*index + 1;
+                int right_child_index = 2*index + 2;
+                if (id_heap_vector[left_child_index] == false) {// unallocated Id in the left subtree
+                    index = left_child_index;
+                } else if (id_heap_vector[right_child_index] == false) { // unallocated Id in the right subtree
+                    index = right_child_index;
+                } else { //Both subtrees are allocated, this actually means you broke your tree
+                    throw std::overflow_error("No Ids available");
+                }
+            }
+            id_heap_vector[index] = true;
+            update_tree(index);
+            return (index - max_value + 1);
+        }
+
+        void update_tree(int index) {
+            while (index > 0) {
+                int parent_index = (index - 1) / 2;
+                int left_child_index = 2 * parent_index + 1;
+                int right_child_index = 2 * parent_index + 2;
+                if (id_heap_vector[left_child_index] == true && id_heap_vector[right_child_index] == true) {
+                    id_heap_vector[parent_index] = true;
+                } else {
+                    id_heap_vector[parent_index] = false;
+                }
+                index = parent_index;
+            }
+        }
+
+        void releaseId(int Id) {
+            // release allocated id and allow it to be allocated again another time
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (Id < 0 || Id > max_value || id_heap_vector[Id + max_value -1] == false) {
+                // throw an exception
+                throw std::invalid_argument("The Id " + std::to_string(Id) + " cannot be released");
+            }
+            id_heap_vector[Id + max_value -1] = false;
+            update_tree(Id + max_value -1);
+        }
+};
+
 
 int main () {
-    // std::cout << std::numeric_limits<int>::max() << std::endl;
     auto start = CURRENT_TIME;
-    Allocator first_allocator(100000);
-    for (int i = 0; i < 100000; i++) {
-        int temp = first_allocator.allocateId();
-        // std::cout<< temp <<std::endl;
-        // first_allocator.releaseId(temp);
+    Allocator first_allocator(1000);
+    for (int i = 0; i < 1000; i++) {
+        first_allocator.allocateId();
     }
     auto stop = CURRENT_TIME;
 	auto duration = GET_DURATION(stop - start);
     std::cout << std::to_string(duration.count()) << std::endl;
 
     start = CURRENT_TIME;
-    MemoryOrSpaceEfficentAllocator second_allocator(100000);
-    for (int i = 0; i < 100000; i++) {
-        int temp = second_allocator.allocateId();
-        // std::cout<< temp <<std::endl;
-        // second_allocator.releaseId(temp);
+    MemoryOrSpaceEfficentAllocator second_allocator(1000);
+    for (int i = 0; i < 1000; i++) {
+        second_allocator.allocateId();
     }
     stop = CURRENT_TIME;
 	duration = GET_DURATION(stop - start);
     std::cout << std::to_string(duration.count()) << std::endl;
 
-    print_sizes();
+    start = CURRENT_TIME;
+    BinaryHeapAllocator third_allocator(10);
+    for (int i = 0; i < 10; i++) {
+        std::cout<<third_allocator.allocateId() << " ";
+    }
+
+    std::cout<<std::endl;
+    stop = CURRENT_TIME;
+	duration = GET_DURATION(stop - start);
+    std::cout << std::to_string(duration.count()) << std::endl;
     
     return 0;
 }
