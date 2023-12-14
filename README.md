@@ -71,11 +71,6 @@ This question is **somewhat** popular for onsite interviews. It has a multi-thre
 
 [Solution](https://github.com/insideofdrop/Dropbox-Interview-Prep/blob/main/code/TokenBucket.java)
 
-7. **Search the DOM**
-
-This question is somewhat popular for roles with a large frontend component. 
-
-[Question](https://github.com/insideofdrop/Dropbox-Interview-Prep/blob/main/code/search_the_dom.py)
 
 8. **Space Panorama**
 
